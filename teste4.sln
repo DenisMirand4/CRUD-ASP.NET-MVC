@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31729.503
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CRUD ASP.NET MVC", "teste4\CRUD ASP.NET MVC.csproj", "{C5D81F5B-D79C-4DAE-9867-9F63CEF8DC3F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "teste4", "teste4\teste4.csproj", "{C5D81F5B-D79C-4DAE-9867-9F63CEF8DC3F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
