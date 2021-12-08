@@ -5,105 +5,118 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using Dapper;
+using System.Data.SqlClient;
+using System.Threading.Tasks;
 
 namespace teste4.Controllers
 {
     public class CRUDController : Controller
     {
-        public IList<Produto> ListaProdutos
-        {
-            get { return _ListaProdutos ?? (_ListaProdutos = new List<Produto>()); }
-        }
-        static IList<Produto> _ListaProdutos;
+        private static string connectionString = @"Data Source=DESKTOP-ACGR40L;Initial Catalog=Produtos;Integrated Security=True;";
         
-
         [HttpGet]
-        public ActionResult Index()
+        public async Task<ActionResult> Index()
         {
-
-            var context = new CRUDContext();
-            var model = context.Produtos.ToList();
-            
-            if (Request.IsAjaxRequest())
+            using (var db = new SqlConnection(connectionString))
             {
-                return Json(model, JsonRequestBehavior.AllowGet);
-            }   
-
-            return View(model);
+                await db.OpenAsync();
+                var query = "SELECT TOP (1000) [Id],[Nome],[Preco] FROM[Produtos].[dbo].[Produto]";
+                var model = await db.QueryAsync<Produto>(query);
+                if (Request.IsAjaxRequest())
+                {
+                    return Json(model, JsonRequestBehavior.AllowGet);
+                }
+                return View(model);
+            }          
         }
 
         [HttpPost]
-        public ActionResult Adicionar(Produto model)
-        {
-            using (var context = new CRUDContext())
+        public async Task<ActionResult> Adicionar(Produto model)
+        {            
+            using (var db = new SqlConnection(connectionString))
             {
-                context.Produtos.Add(model);
-                context.SaveChanges();
+                await db.OpenAsync();
+                var query = @"Insert Into Produto(Nome,Preco) Values(@Nome,@Preco)";
+                await db.ExecuteAsync(query, model);
             }
             return RedirectToRoute("CRUD.Index");
         }
 
-
         [HttpGet]
         public ActionResult Editar(int Id)
         {
-            var context = new CRUDContext();
-            var model = context.Produtos.FirstOrDefault(x => x.Id == Id);
-
-            if (Request.IsAjaxRequest())
-            {
-                return Json(model, JsonRequestBehavior.AllowGet);
-            }
-
-            return View(model);
+            using (var db = new SqlConnection(connectionString))
+            {                   
+                db.Open();
+                var query = "SELECT * FROM[dbo].[Produto] WHERE[Id] = "+ Id;
+                var data = db.Query<Produto>(query);
+                Produto model = data.FirstOrDefault(x => x.Id == Id);
+                if (Request.IsAjaxRequest())
+                {
+                    return Json(model, JsonRequestBehavior.AllowGet);
+                }
+                return View(model);
+            }            
         }
 
         [HttpPost]
         public ActionResult Editar(int Id, FormCollection form)  
         {
-            //var model = new Produto();
-            var context = new CRUDContext();
-            
-           var data = context.Produtos.FirstOrDefault(x => x.Id == Id);
-                if (data == null)
+            using (var db = new SqlConnection(connectionString))
+            {
+                db.Open();
+                var query = "SELECT * FROM[dbo].[Produto] WHERE[Id] = " + Id;
+                var data = db.Query<Produto>(query);
+                Produto model = data.FirstOrDefault(x => x.Id == Id);
+                if (model == null)
                 {
                     return HttpNotFound();
                 }
-            TryUpdateModel(data);
-            context.SaveChanges();
-            return Json(true);
-
+                TryUpdateModel(model);
+                query = @"Update Produto Set Nome=@Nome, Preco=@Preco Where Id=@Id";
+                db.Execute(query, model);
+                return Json(true);                
+            }
         }
 
         [HttpGet]
         public ActionResult Excluir(int Id)
         {
-            var context = new CRUDContext();
-            var model = context.Produtos.FirstOrDefault(x => x.Id == Id);
-
-            if (Request.IsAjaxRequest())
+            using (var db = new SqlConnection(connectionString))
             {
-                return Json(model, JsonRequestBehavior.AllowGet);
+                db.Open();
+                var query = "SELECT * FROM[dbo].[Produto] WHERE[Id] = " + Id;
+                var data = db.Query<Produto>(query);
+                Produto model = data.FirstOrDefault(x => x.Id == Id);                
+                if (Request.IsAjaxRequest())
+                {
+                    return Json(model, JsonRequestBehavior.AllowGet);
+                }
+                return View(model);
             }
-
-            return View(model);
         }
 
         [HttpPost]
         public ActionResult Excluir(int Id,FormCollection form)
         {
-            var context = new CRUDContext();
-            Produto edit = null;
             if (Id == 0)
             {
                 return RedirectToRoute("CRUD.Index");
             }
-            else
+            using (var db = new SqlConnection(connectionString))
             {
-                edit = context.Produtos.FirstOrDefault(x => x.Id == Id);
-                context.Produtos.Remove(edit);
-                context.SaveChanges();
-                return Json(true);
+                db.Open();
+                var query = "SELECT * FROM[dbo].[Produto] WHERE[Id] = " + Id;
+                var data = db.Query<Produto>(query);
+                Produto model = data.FirstOrDefault(x => x.Id == Id);
+                if (model == null)
+                {
+                    return HttpNotFound();
+                }
+                query = @"Delete from Produto Where Id=" + Id;
+                db.Execute(query,Id);
+                return Json(true);                
             }
         }
     }
