@@ -21,5 +21,7 @@ namespace teste4.Data
             base.OnModelCreating(modelBuilder);
 
         }
+
+        public System.Data.Entity.DbSet<ClassLibrary3.DTO.ProdutoDTO> ProdutoDTOes { get; set; }
     }
 }

@@ -1,0 +1,110 @@
+﻿
+<ul id='produtos'></ul>
+<br />
+
+<p>Nome: <input id="Nome" type="text" /></p>
+<p>Preço: <input id="Preco" type="text" /></p>
+<button id="botao">Click</button>
+<br />
+<form id="hide-form" class="hide">
+    <h3>Editar</h3>
+    <p>Nome: <input id="Nome-edit" type="text" /></p>
+    <p>Preço: <input id="Preco-edit" type="text" /></p>
+    <button id="salvarEdit">Salvar</button>
+    <button id="cancelarEdit">Cancelar</button>
+</form>
+
+@section scripts {
+    <script>
+        jQuery(function ($) {
+            var $produtos = $('#produtos');
+            var $Nome = $('#Nome');
+            var $Preco = $('#Preco');
+            var $EditNome = $('#Nome-edit');
+            var $EditPreco = $('#Preco-edit');
+
+            $.ajax({
+                type: 'GET',
+                url: '/api/CRUDApi',
+                success: function (produtos) {
+                    $.each(produtos, function (i, produto) {
+                        $produtos.append('<li id=' + produto.Nome + ' class= ' + produto.Preco + '><p>Id:' + produto.Id + '</p><p class="NomeProd">Nome: ' + produto.Nome + '</p><p class="PrecoProd">Preco: ' + produto.Preco + '</p><button class="editar" id= ' + produto.Id + '>Editar</button><button class="deletar" id= ' + produto.Id + '>Deletar</button></li>');
+                    });
+                }
+            });
+
+            $('#botao').on('click', function () {
+                //debugger;
+                var produto = {
+                    Nome: $Nome.val(),
+                    Preco: $Preco.val(),
+                };
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/CRUDApi',
+                    data: produto,
+                    success: function () {
+                        alert('adicionado');
+                        window.location.reload();
+                    }
+                });
+            });
+            $produtos.delegate('.deletar', 'click', function () {
+                var $li = $(this).closest('li');
+                var $del = $(this);
+                $.ajax({
+                    type: 'DELETE',
+                    url: '/api/CRUDApi/' + $del.attr('id'),
+                    success: function () {
+                        $li.remove();
+                        window.location.reload();
+
+                    }
+                });
+            });
+            $produtos.delegate('.editar', 'click', function () {
+                var $li = $(this).closest('li');
+                var $p = $(this);
+                var $form = $('#hide-form');
+                var prod = {
+                    Id: $p.attr('id'),
+                    Nome: $li.attr('id'),
+                    Preco: $li.attr('class'),
+                };                
+                $EditNome.val(prod.Nome);
+                $EditPreco.val(prod.Preco);
+                $form.removeClass('hide');
+                $form.addClass(prod.Id);
+            });
+
+            $('#salvarEdit').on('click', function () {
+                event.stopPropagation();
+                event.stopPropagation();
+                var $form = $(this).closest('form');
+                var produto = {
+                    Id: $form.attr('class'),
+                    Nome: $EditNome.val(),
+                    Preco: $EditPreco.val(),
+                };
+                $.ajax({
+                    type: 'PUT',
+                    url: '/api/CRUDApi',
+                    data: produto,
+                    success: function () {
+                        alert('atualizado');
+                        $form.addClass('hide');
+                        window.location.reload();
+
+                    }
+                });
+            });
+
+            $('#cancelarEdit').on('click', function () {
+                event.stopPropagation();
+                event.stopPropagation();
+                var $form = $('#hide-form');
+                $form.addClass('hide');
+            });
+        });
+    </script>
+}
