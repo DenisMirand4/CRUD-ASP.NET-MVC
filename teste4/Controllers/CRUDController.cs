@@ -8,93 +8,67 @@ using System.Web.Mvc;
 using Dapper;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
+using ClassLibrary3.Servico;
+using ClassLibrary3.DTO;
 
 namespace teste4.Controllers
 {
     public class CRUDController : Controller
-    {
-        private static string connectionString = @"Data Source=DESKTOP-ACGR40L;Initial Catalog=Produtos;Integrated Security=True;";
-        
+    {     
         [HttpGet]
-        public async Task<ActionResult> Index()
+        public ActionResult Index()
         {
-            using (var db = new SqlConnection(connectionString))
+            var model = new ObterProdutos().GetAll();
+            if (Request.IsAjaxRequest())
             {
-                await db.OpenAsync();
-                var query = "SELECT TOP (1000) [Id],[Nome],[Preco] FROM[Produtos].[dbo].[Produto]";
-                var model = await db.QueryAsync<Produto>(query);
-                if (Request.IsAjaxRequest())
-                {
-                    return Json(model, JsonRequestBehavior.AllowGet);
-                }
-                return View(model);
-            }          
+                return Json(model, JsonRequestBehavior.AllowGet);
+            }
+            return View(model);                      
         }
 
         [HttpPost]
-        public async Task<ActionResult> Adicionar(Produto model)
-        {            
-            using (var db = new SqlConnection(connectionString))
-            {
-                await db.OpenAsync();
-                var query = @"Insert Into Produto(Nome,Preco) Values(@Nome,@Preco)";
-                await db.ExecuteAsync(query, model);
-            }
+        public ActionResult Adicionar(ProdutoDTO model)
+        {
+            new AdicionarProduto().AddProduto(model);
             return RedirectToRoute("CRUD.Index");
         }
 
         [HttpGet]
         public ActionResult Editar(int Id)
         {
-            using (var db = new SqlConnection(connectionString))
-            {                   
-                db.Open();
-                var query = "SELECT * FROM[dbo].[Produto] WHERE[Id] = "+ Id;
-                var data = db.Query<Produto>(query);
-                Produto model = data.FirstOrDefault(x => x.Id == Id);
-                if (Request.IsAjaxRequest())
-                {
-                    return Json(model, JsonRequestBehavior.AllowGet);
-                }
-                return View(model);
-            }            
+            var model = new LocalizarID().Locate(Id);
+            if (Request.IsAjaxRequest())
+            {
+                return Json(model, JsonRequestBehavior.AllowGet);
+            }
+            return View(model);
+                        
         }
 
         [HttpPost]
         public ActionResult Editar(int Id, FormCollection form)  
         {
-            using (var db = new SqlConnection(connectionString))
+            var model = new LocalizarID().Locate(Id);
+            if (model == null)
             {
-                db.Open();
-                var query = "SELECT * FROM[dbo].[Produto] WHERE[Id] = " + Id;
-                var data = db.Query<Produto>(query);
-                Produto model = data.FirstOrDefault(x => x.Id == Id);
-                if (model == null)
-                {
-                    return HttpNotFound();
-                }
-                TryUpdateModel(model);
-                query = @"Update Produto Set Nome=@Nome, Preco=@Preco Where Id=@Id";
-                db.Execute(query, model);
-                return Json(true);                
+                return HttpNotFound();
             }
+            TryUpdateModel(model);         
+            new EditarProduto().Edit(model);
+            return Json(true);                
+            
         }
 
         [HttpGet]
         public ActionResult Excluir(int Id)
         {
-            using (var db = new SqlConnection(connectionString))
+            var model = new LocalizarID().Locate(Id);
+            if (Request.IsAjaxRequest())
             {
-                db.Open();
-                var query = "SELECT * FROM[dbo].[Produto] WHERE[Id] = " + Id;
-                var data = db.Query<Produto>(query);
-                Produto model = data.FirstOrDefault(x => x.Id == Id);                
-                if (Request.IsAjaxRequest())
-                {
-                    return Json(model, JsonRequestBehavior.AllowGet);
-                }
-                return View(model);
+                return Json(model, JsonRequestBehavior.AllowGet);
             }
+            return View(model);
+            
         }
 
         [HttpPost]
@@ -104,20 +78,13 @@ namespace teste4.Controllers
             {
                 return RedirectToRoute("CRUD.Index");
             }
-            using (var db = new SqlConnection(connectionString))
-            {
-                db.Open();
-                var query = "SELECT * FROM[dbo].[Produto] WHERE[Id] = " + Id;
-                var data = db.Query<Produto>(query);
-                Produto model = data.FirstOrDefault(x => x.Id == Id);
+             var model = new LocalizarID().Locate(Id);
                 if (model == null)
                 {
                     return HttpNotFound();
                 }
-                query = @"Delete from Produto Where Id=" + Id;
-                db.Execute(query,Id);
+            new ExcluirProduto().Delete(Id);
                 return Json(true);                
             }
         }
     }
-}

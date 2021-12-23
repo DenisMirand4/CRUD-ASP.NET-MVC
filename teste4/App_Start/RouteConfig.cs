@@ -34,7 +34,12 @@ namespace teste4
                 url: "crud/excluir/{id}",
                 defaults: new { controller = "CRUD", action = "Excluir" }
             );
-            
+            routes.MapRoute(
+                name: "CRUDCallApi.ReturnBlank",
+                url: "CRUDCallApi/ReturnBlank",
+                defaults: new { controller = "CRUDCallApi", action = "ReturnBlank" }
+            );
+
             routes.MapRoute(
                 name: "Default",
                 url: "Home",
